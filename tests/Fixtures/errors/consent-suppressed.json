@@ -1,0 +1,5 @@
+{
+    "status": 200,
+    "content_type": "application/fhir+json;charset=utf-8",
+    "body": "{\n    \"resourceType\": \"OperationOutcome\",\n    \"issue\": [\n        {\n            \"severity\": \"information\",\n            \"code\": \"suppressed\",\n            \"details\": {\n                \"text\": \"The operation did not return any information due to consent or privacy rules.\"\n            }\n        }\n    ]\n}"
+}

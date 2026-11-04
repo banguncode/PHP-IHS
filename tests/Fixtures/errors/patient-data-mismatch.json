@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/json",
+    "body": "{\n    \"resourceType\": \"OperationOutcome\",\n    \"text\": {\n        \"status\": \"generated\"\n    },\n    \"issue\": [\n        {\n            \"severity\": \"error\",\n            \"code\": \"exception\",\n            \"details\": {\n                \"text\": \"alamat TIDAK SESUAI\"\n            },\n            \"expression\": [\n                \"Patient.address\"\n            ]\n        },\n        {\n            \"severity\": \"error\",\n            \"code\": \"exception\",\n            \"details\": {\n                \"text\": \"jenis_kelamin TIDAK SESUAI\"\n            },\n            \"expression\": [\n                \"Patient.gender\"\n            ]\n        }\n    ]\n}"
+}

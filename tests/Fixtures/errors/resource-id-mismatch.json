@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/fhir+json;charset=utf-8",
+    "body": "{\n    \"issue\": [\n        {\n            \"code\": \"structure\",\n            \"details\": {\n                \"text\": \"resource_mismatch\"\n            },\n            \"diagnostics\": \"resource id mismatch, id of specified resource: 3dedcec9-885d-435e-9ac5-58853cb216, id from payload: 3dedcec9-885d-435e-9ac5-58853cb216bb\",\n            \"severity\": \"error\"\n        }\n    ],\n    \"resourceType\": \"OperationOutcome\"\n}"
+}

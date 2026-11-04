@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/json",
+    "body": "{\n    \"resourceType\": \"OperationOutcome\",\n    \"issue\": [\n        {\n            \"severity\": \"error\",\n            \"code\": \"forbidden\",\n            \"details\": {\n                \"text\": \"Operation cannot be performed due to business rules, consent or privacy rules, or access permission constraints.\"\n            }\n        }\n    ]\n}"
+}

@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/fhir+json;charset=utf-8",
+    "body": "{\n    \"issue\": [\n        {\n            \"code\": \"value\",\n            \"details\": {\n                \"text\": \"reference_not_found\"\n            },\n            \"diagnostics\": \"reference target(s) not found: Condition/f51d6f8b-0508-4286-9942-0dc196cca59a\",\n            \"severity\": \"error\"\n        }\n    ],\n    \"resourceType\": \"OperationOutcome\"\n}"
+}

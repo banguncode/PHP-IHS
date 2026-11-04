@@ -1,0 +1,5 @@
+{
+    "status": 404,
+    "content_type": "application/json",
+    "body": "{\n    \"resourceType\": \"OperationOutcome\",\n    \"text\": {\n        \"status\": \"generated\"\n    },\n    \"issue\": [\n        {\n            \"severity\": \"error\",\n            \"code\": \"exception\",\n            \"details\": {\n                \"text\": \"Failed to create new patient, nik-ibu not found\"\n            }\n        }\n    ]\n}"
+}

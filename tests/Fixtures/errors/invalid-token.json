@@ -1,0 +1,5 @@
+{
+    "status": 401,
+    "content_type": "application/json",
+    "body": "{\n    \"fault\": {\n        \"faultstring\": \"Invalid access token\",\n        \"detail\": {\n            \"errorcode\": \"oauth.v2.InvalidAccessToken\"\n        }\n    }\n}"
+}

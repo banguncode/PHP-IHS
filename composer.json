@@ -1,0 +1,53 @@
+{
+    "name": "banguncode/php-ihs",
+    "description": "PHP client for the SATUSEHAT (Indonesia Health Services) FHIR R4 API of the Indonesian Ministry of Health.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "satusehat",
+        "ihs",
+        "fhir",
+        "fhir-r4",
+        "kemkes",
+        "rekam-medis",
+        "healthcare",
+        "indonesia"
+    ],
+    "authors": [
+        {
+            "name": "Rum Haidar Fauzan",
+            "email": "rum.haidar@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5",
+        "ext-curl": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^4.8.36 || ^5.7.27 || ^6.5 || ^7.5 || ^8.5 || ^9.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "BangunCode\\Ihs\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "BangunCode\\Ihs\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "style": "@php tools/check-style.php",
+        "check": [
+            "@style",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

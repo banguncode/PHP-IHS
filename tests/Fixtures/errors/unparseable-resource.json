@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/fhir+json;charset=utf-8",
+    "body": "{\n    \"issue\": [\n        {\n            \"code\": \"structure\",\n            \"details\": {\n                \"text\": \"unparseable_resource\"\n            },\n            \"diagnostics\": \"missing required field \\\"status\\\"\",\n            \"expression\": [\n                \"Bundle.entry[0].resource.serviceRequest\"\n            ],\n            \"severity\": \"error\"\n        }\n    ],\n    \"resourceType\": \"OperationOutcome\"\n}"
+}

@@ -1,0 +1,5 @@
+{
+    "status": 401,
+    "content_type": "application/json",
+    "body": "{\n    \"fault\": {\n        \"faultstring\": \"Invalid API call as no apiproduct match found\",\n        \"detail\": {\n            \"errorcode\": \"keymanagement.service.InvalidAPICallAsNoApiProductMatchFound\"\n        }\n    }\n}"
+}

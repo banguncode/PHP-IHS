@@ -1,0 +1,5 @@
+{
+    "status": 401,
+    "content_type": "application/json",
+    "body": "{\n    \"ErrorCode\": \"invalid_client\",\n    \"Error\": \"ClientId is Invalid\"\n}"
+}

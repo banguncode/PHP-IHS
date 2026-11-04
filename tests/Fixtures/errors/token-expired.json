@@ -1,0 +1,5 @@
+{
+    "status": 401,
+    "content_type": "application/json",
+    "body": "{\n    \"fault\": {\n        \"faultstring\": \"Access Token expired\",\n        \"detail\": {\n            \"errorcode\": \"keymanagement.service.access_token_expired\"\n        }\n    }\n}"
+}
