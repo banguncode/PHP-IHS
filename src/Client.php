@@ -386,6 +386,10 @@ class Client
             throw new ApiException('SATUSEHAT returned a response that is not JSON.', $response);
         }
 
+        if (ApiException::isEnvelope($data) && $data['error'] === true) {
+            throw ApiException::fromResponse($response);
+        }
+
         if (OperationOutcome::isOperationOutcome($data)) {
             $outcome = new OperationOutcome($data);
             if ($outcome->hasErrors() || $outcome->hasIssueCode(array('suppressed'))) {

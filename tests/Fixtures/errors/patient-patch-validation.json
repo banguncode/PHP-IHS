@@ -1,0 +1,5 @@
+{
+    "status": 400,
+    "content_type": "application/json",
+    "body": "{\n    \"code\": 400,\n    \"error\": true,\n    \"message\": \"Failed to update patient data\",\n    \"data\": {\n        \"validation\": [\n            {\n                \"property\": \"test:name\",\n                \"message\": \"Test operation for 'name' can not be empty\",\n                \"valid\": false,\n                \"mandatory\": true\n            },\n            {\n                \"property\": \"test:gender\",\n                \"message\": \"Test operation for 'gender' can not be empty\",\n                \"valid\": false,\n                \"mandatory\": true\n            },\n            {\n                \"property\": \"test:birthDate\",\n                \"message\": \"Test operation for 'birthDate' can not be empty\",\n                \"valid\": false,\n                \"mandatory\": true\n            }\n        ]\n    }\n}"
+}

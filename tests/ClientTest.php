@@ -280,4 +280,21 @@ final class ClientTest extends TestCase
 
         $this->assertSame('W/"1"', $client->getLastResponse()->getHeader('etag'));
     }
+
+    public function testPatientPatchEnvelope()
+    {
+        $http = new MockHttpClient();
+        $http->queueToken()
+            ->queue(200, array('code' => 200, 'error' => false, 'message' => 'Patient data updated successfully', 'data' => array('patient_id' => 'P1')))
+            ->queue(200, array('code' => 400, 'error' => true, 'message' => 'Failed to update patient data'));
+        $client = $this->client($http);
+
+        $result = $client->patient()->patch('P1', array(array('op' => 'test', 'path' => '/gender', 'value' => 'female')));
+        $this->assertSame('P1', $result['data']['patient_id']);
+
+        $exception = $this->captureException('BangunCode\Ihs\Exception\ValidationException', function () use ($client) {
+            $client->patient()->patch('P1', array(array('op' => 'replace', 'path' => '/gender', 'value' => 'female')));
+        });
+        $this->assertSame(200, $exception->getStatusCode());
+    }
 }

@@ -34,6 +34,8 @@ final class ErrorMappingTest extends TestCase
             'forbidden html' => array('forbidden-html', $ns . 'ForbiddenException', null, '403 Forbidden'),
             'wrong url' => array('wrong-url', $ns . 'NotFoundException', null, 'HTTP 404'),
             'no healthy upstream' => array('no-healthy-upstream', $ns . 'ServerException', null, 'no healthy upstream'),
+            'citizen not found' => array('citizen-not-found', $ns . 'ValidationException', 'exception', 'Failed to get citizen'),
+            'patient patch validation' => array('patient-patch-validation', $ns . 'ValidationException', null, "Failed to update patient data: Test operation for 'name' can not be empty"),
         );
     }
 

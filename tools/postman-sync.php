@@ -126,6 +126,8 @@ function write_error_fixtures(array $collections, $directory)
         'Patient - Create New Born Exists' => 'newborn-duplicate',
         'Patient - Create New Born Ibu Not Found' => 'mother-not-found',
         'EpisodeOfCare - Update' => 'reference-not-found',
+        'Create Failed - Patient Not Found' => 'citizen-not-found',
+        'Patch Patient Require Test' => 'patient-patch-validation',
     );
 
     if (!is_dir($directory)) {
@@ -139,7 +141,15 @@ function write_error_fixtures(array $collections, $directory)
         }
         walk_requests($collection['item'], function ($item) use ($names, $directory, &$written) {
             foreach (isset($item['response']) ? $item['response'] : array() as $response) {
-                if (!isset($names[$response['name']], $response['code'])) {
+                if (!isset($names[$response['name']])) {
+                    continue;
+                }
+                $status = isset($response['code']) ? $response['code'] : null;
+                $body = json_decode((string) $response['body'], true);
+                if ($status === null && isset($body['code'])) {
+                    $status = (int) $body['code'];
+                }
+                if ($status === null) {
                     continue;
                 }
                 $contentType = '';
@@ -148,7 +158,7 @@ function write_error_fixtures(array $collections, $directory)
                         $contentType = $header['value'];
                     }
                 }
-                $fixture = array('status' => $response['code'], 'content_type' => $contentType, 'body' => (string) $response['body']);
+                $fixture = array('status' => $status, 'content_type' => $contentType, 'body' => (string) $response['body']);
                 file_put_contents(
                     $directory . '/' . $names[$response['name']] . '.json',
                     json_encode($fixture, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"

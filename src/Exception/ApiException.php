@@ -8,10 +8,11 @@ use BangunCode\Ihs\Http\Response;
 /**
  * Thrown when SATUSEHAT answers with an error.
  *
- * SATUSEHAT reports errors in three shapes: a FHIR OperationOutcome, an API gateway fault
- * ({"fault": {"faultstring", "detail": {"errorcode"}}}) and an OAuth error
- * ({"ErrorCode", "Error"}). Some errors carry a plain text or HTML body, or none at all.
- * All of them are normalised into a message and an error code.
+ * SATUSEHAT reports errors in four shapes: a FHIR OperationOutcome, an API gateway fault
+ * ({"fault": {"faultstring", "detail": {"errorcode"}}}), an OAuth error ({"ErrorCode", "Error"})
+ * and, for Patient updates, an envelope ({"code", "error", "message", "data": {"validation"}}).
+ * Some errors carry a plain text or HTML body, or none at all. All of them are normalised into a
+ * message and an error code.
  */
 class ApiException extends \RuntimeException implements IhsException
 {
@@ -73,12 +74,26 @@ class ApiException extends \RuntimeException implements IhsException
         } elseif (is_array($body) && isset($body['ErrorCode'])) {
             $errorCode = (string) $body['ErrorCode'];
             $detail = isset($body['Error']) ? (string) $body['Error'] : null;
+        } elseif (self::isEnvelope($body)) {
+            $detail = isset($body['message']) ? (string) $body['message'] : null;
+            $messages = array();
+            foreach (isset($body['data']['validation']) ? (array) $body['data']['validation'] : array() as $item) {
+                if (isset($item['message'])) {
+                    $messages[] = (string) $item['message'];
+                }
+            }
+            if ($messages) {
+                $detail .= ': ' . implode('; ', $messages);
+            }
+            if (isset($body['code']) && is_numeric($body['code']) && (int) $body['code'] >= 400) {
+                $status = (int) $body['code'];
+            }
         } else {
             $text = trim(preg_replace('/\s+/', ' ', strip_tags($response->getBody())));
             $detail = $text !== '' ? substr($text, 0, 500) : null;
         }
 
-        $message = sprintf('SATUSEHAT responded with HTTP %d', $status);
+        $message = sprintf('SATUSEHAT responded with HTTP %d', $response->getStatusCode());
         if ($detail !== null && $detail !== '') {
             $message .= ': ' . $detail;
         }
@@ -103,6 +118,19 @@ class ApiException extends \RuntimeException implements IhsException
         }
 
         return new self($message, $response, $errorCode, $outcome);
+    }
+
+    /**
+     * Whether a decoded body is the non FHIR envelope {"code", "error", "message", "data"} that
+     * SATUSEHAT uses for some Patient operations.
+     *
+     * @param mixed $body
+     *
+     * @return bool
+     */
+    public static function isEnvelope($body)
+    {
+        return is_array($body) && isset($body['error'], $body['message']) && is_bool($body['error']);
     }
 
     /**
