@@ -164,6 +164,24 @@ class ResourceEndpoint
     }
 
     /**
+     * GET /{type}/{id}/{operation}, an instance level FHIR operation such as $everything.
+     *
+     * @param string                             $id
+     * @param string                             $operation  Operation name including the leading "$".
+     * @param array<string, string|int|string[]> $parameters
+     *
+     * @return array|null
+     */
+    public function operation($id, $operation, array $parameters = array())
+    {
+        if (!is_string($operation) || !preg_match('/^\$[A-Za-z][A-Za-z-]*$/', $operation)) {
+            throw new InvalidArgumentException(sprintf('Invalid operation name "%s".', $operation));
+        }
+
+        return $this->client->request('GET', $this->path($id) . '/' . $operation, null, $parameters);
+    }
+
+    /**
      * @param array|string|\JsonSerializable $resource
      *
      * @return array

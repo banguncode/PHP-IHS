@@ -95,6 +95,8 @@ final class FhirTest extends TestCase
         $this->assertSame('http://sys-ids.kemkes.go.id/prescription-item/100', IdentifierSystem::forOrganization('prescription-item', 100));
         $this->assertSame('https://sys-ids.kemkes.go.id/device/100', IdentifierSystem::device('100'));
         $this->assertSame('http://sys-ids.kemkes.go.id/diagnostic/100/lab', IdentifierSystem::diagnosticReport('100', 'lab'));
+        $this->assertSame('https://sys-ids.kemkes.go.id/insurance-subscriber/200', IdentifierSystem::insuranceSubscriber('200'));
+        $this->assertSame('https://sys-ids.kemkes.go.id/insurance-number/200', IdentifierSystem::insuranceNumber('200'));
 
         $this->captureException('BangunCode\Ihs\Exception\InvalidArgumentException', function () {
             IdentifierSystem::forOrganization('encounter', '');
@@ -123,9 +125,9 @@ final class FhirTest extends TestCase
             Payload::toArray('{invalid');
         });
 
-        $this->assertCount(33, ResourceType::all());
+        $this->assertCount(46, ResourceType::all());
         $this->assertTrue(ResourceType::isKnown('QuestionnaireResponse'));
-        $this->assertFalse(ResourceType::isKnown('Immunization'));
-        $this->assertTrue(ResourceType::isValidName('Immunization'));
+        $this->assertFalse(ResourceType::isKnown('Basic'));
+        $this->assertTrue(ResourceType::isValidName('Basic'));
     }
 }

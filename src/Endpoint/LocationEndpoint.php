@@ -2,7 +2,9 @@
 
 namespace BangunCode\Ihs\Endpoint;
 
+use BangunCode\Ihs\Exception\InvalidArgumentException;
 use BangunCode\Ihs\Fhir\Bundle;
+use BangunCode\Ihs\Fhir\IdentifierSystem;
 use BangunCode\Ihs\Fhir\JsonPatch;
 
 /**
@@ -30,6 +32,38 @@ class LocationEndpoint extends ResourceEndpoint
         self::BED_OCCUPIED => 'Occupied',
         self::BED_UNOCCUPIED => 'Unoccupied',
     );
+
+    /**
+     * GET /Location?identifier=http://sys-ids.kemkes.go.id/location/{organizationId}|{value}
+     *
+     * @param string      $value          The facility's own location code, for example G-2-R-1A.
+     * @param string|null $organizationId Defaults to the organization_id configuration option.
+     *
+     * @return Bundle
+     */
+    public function findByIdentifier($value, $organizationId = null)
+    {
+        if ($organizationId === null) {
+            $organizationId = $this->client->getConfig()->getOrganizationId();
+        }
+        if ($organizationId === null) {
+            throw new InvalidArgumentException('An organization id is required: pass it or set organization_id.');
+        }
+
+        return $this->searchByIdentifier(IdentifierSystem::forOrganization('location', $organizationId), $value);
+    }
+
+    /**
+     * GET /Location?name={name}
+     *
+     * @param string $name
+     *
+     * @return Bundle
+     */
+    public function findByName($name)
+    {
+        return $this->search(array('name' => $name));
+    }
 
     /**
      * GET /Location?organization={organizationId}

@@ -258,12 +258,13 @@ final class ClientTest extends TestCase
 
         $this->assertInstanceOf('BangunCode\Ihs\Endpoint\PatientEndpoint', $client->patient());
         $this->assertSame('MedicationAdministration', $client->medicationAdministration()->getType());
-        $this->assertSame('Immunization', $client->resource('Immunization')->getType());
+        $this->assertInstanceOf('BangunCode\Ihs\Endpoint\ClinicalEndpoint', $client->condition());
+        $this->assertSame('Basic', $client->resource('Basic')->getType());
         $this->assertSame($client->goal(), $client->resource('Goal'));
         $this->assertSame('http://sys-ids.kemkes.go.id/encounter/10000004', $client->identifierSystem('encounter'));
 
         $this->captureException('BadMethodCallException', function () use ($client) {
-            $client->immunization();
+            $client->basic();
         });
         $this->captureException('BangunCode\Ihs\Exception\InvalidArgumentException', function () use ($client) {
             $client->resource('patient/../x');

@@ -25,6 +25,7 @@ final class IdentifierSystem
     const AE_TITLE = 'http://sys-ids.kemkes.go.id/ae-title';
     const REFERRAL_NUMBER = 'http://sys-ids.kemkes.go.id/referral-number';
     const CLAIM_DISPENSE_TYPE = 'http://sys-ids.kemkes.go.id/claim-dispense-type';
+    const SPECIMEN_ACSN = 'http://sys-ids.kemkes.go.id/specimen-acsn';
 
     const BASE = 'http://sys-ids.kemkes.go.id/';
 
@@ -58,11 +59,31 @@ final class IdentifierSystem
     /**
      * @param string $organizationId
      *
-     * @return string https://sys-ids.kemkes.go.id/device/{organizationId}, the only facility scoped system served over https.
+     * @return string https://sys-ids.kemkes.go.id/device/{organizationId}.
      */
     public static function device($organizationId)
     {
         return 'https://sys-ids.kemkes.go.id/device/' . self::organization($organizationId);
+    }
+
+    /**
+     * @param string $insurerOrganizationId Organization id of the insurer.
+     *
+     * @return string https://sys-ids.kemkes.go.id/insurance-subscriber/{insurerOrganizationId}, the member number.
+     */
+    public static function insuranceSubscriber($insurerOrganizationId)
+    {
+        return 'https://sys-ids.kemkes.go.id/insurance-subscriber/' . self::organization($insurerOrganizationId);
+    }
+
+    /**
+     * @param string $insurerOrganizationId Organization id of the insurer.
+     *
+     * @return string https://sys-ids.kemkes.go.id/insurance-number/{insurerOrganizationId}, the eligibility (SEP) number.
+     */
+    public static function insuranceNumber($insurerOrganizationId)
+    {
+        return 'https://sys-ids.kemkes.go.id/insurance-number/' . self::organization($insurerOrganizationId);
     }
 
     /**

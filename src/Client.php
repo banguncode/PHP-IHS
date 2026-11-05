@@ -5,6 +5,33 @@ namespace BangunCode\Ihs;
 use BangunCode\Ihs\Auth\OAuthTokenProvider;
 use BangunCode\Ihs\Auth\TokenProviderInterface;
 use BangunCode\Ihs\Auth\TokenStorageInterface;
+use BangunCode\Ihs\Endpoint\AllergyIntoleranceEndpoint;
+use BangunCode\Ihs\Endpoint\ChargeItemEndpoint;
+use BangunCode\Ihs\Endpoint\ClaimEndpoint;
+use BangunCode\Ihs\Endpoint\ClinicalEndpoint;
+use BangunCode\Ihs\Endpoint\CoverageEligibilityRequestEndpoint;
+use BangunCode\Ihs\Endpoint\CoverageEligibilityResponseEndpoint;
+use BangunCode\Ihs\Endpoint\CoverageEndpoint;
+use BangunCode\Ihs\Endpoint\DiagnosticReportEndpoint;
+use BangunCode\Ihs\Endpoint\DocumentReferenceEndpoint;
+use BangunCode\Ihs\Endpoint\EpisodeOfCareEndpoint;
+use BangunCode\Ihs\Endpoint\ImagingStudyEndpoint;
+use BangunCode\Ihs\Endpoint\ImmunizationEndpoint;
+use BangunCode\Ihs\Endpoint\LocationEndpoint;
+use BangunCode\Ihs\Endpoint\MedicationDispenseEndpoint;
+use BangunCode\Ihs\Endpoint\MedicationRequestEndpoint;
+use BangunCode\Ihs\Endpoint\ObservationEndpoint;
+use BangunCode\Ihs\Endpoint\OrganizationEndpoint;
+use BangunCode\Ihs\Endpoint\PatientEndpoint;
+use BangunCode\Ihs\Endpoint\PaymentNoticeEndpoint;
+use BangunCode\Ihs\Endpoint\PaymentReconciliationEndpoint;
+use BangunCode\Ihs\Endpoint\PractitionerEndpoint;
+use BangunCode\Ihs\Endpoint\QuestionnaireResponseEndpoint;
+use BangunCode\Ihs\Endpoint\RelatedPersonEndpoint;
+use BangunCode\Ihs\Endpoint\ResourceEndpoint;
+use BangunCode\Ihs\Endpoint\ServiceRequestEndpoint;
+use BangunCode\Ihs\Endpoint\SpecimenEndpoint;
+use BangunCode\Ihs\Endpoint\SubjectEndpoint;
 use BangunCode\Ihs\Exception\ApiException;
 use BangunCode\Ihs\Exception\AuthenticationException;
 use BangunCode\Ihs\Exception\InvalidArgumentException;
@@ -18,14 +45,6 @@ use BangunCode\Ihs\Http\CurlHttpClient;
 use BangunCode\Ihs\Http\HttpClientInterface;
 use BangunCode\Ihs\Http\Request;
 use BangunCode\Ihs\Http\Response;
-use BangunCode\Ihs\Endpoint\DocumentReferenceEndpoint;
-use BangunCode\Ihs\Endpoint\ImagingStudyEndpoint;
-use BangunCode\Ihs\Endpoint\LocationEndpoint;
-use BangunCode\Ihs\Endpoint\MedicationDispenseEndpoint;
-use BangunCode\Ihs\Endpoint\MedicationRequestEndpoint;
-use BangunCode\Ihs\Endpoint\PatientEndpoint;
-use BangunCode\Ihs\Endpoint\PractitionerEndpoint;
-use BangunCode\Ihs\Endpoint\ResourceEndpoint;
 
 /**
  * Entry point for the SATUSEHAT FHIR R4 API.
@@ -42,30 +61,50 @@ use BangunCode\Ihs\Endpoint\ResourceEndpoint;
  * $encounter = $client->encounter()->create($encounterResource);
  * </code>
  *
- * @method ResourceEndpoint allergyIntolerance()
- * @method ResourceEndpoint carePlan()
- * @method ResourceEndpoint clinicalImpression()
- * @method ResourceEndpoint composition()
- * @method ResourceEndpoint condition()
+ * @method ResourceEndpoint account()
+ * @method AllergyIntoleranceEndpoint allergyIntolerance()
+ * @method ClinicalEndpoint carePlan()
+ * @method ChargeItemEndpoint chargeItem()
+ * @method ClaimEndpoint claim()
+ * @method ResourceEndpoint claimResponse()
+ * @method ClinicalEndpoint clinicalImpression()
+ * @method ClinicalEndpoint composition()
+ * @method ClinicalEndpoint condition()
+ * @method CoverageEndpoint coverage()
+ * @method CoverageEligibilityRequestEndpoint coverageEligibilityRequest()
+ * @method CoverageEligibilityResponseEndpoint coverageEligibilityResponse()
  * @method ResourceEndpoint device()
  * @method ResourceEndpoint deviceDispense()
  * @method ResourceEndpoint deviceRequest()
  * @method ResourceEndpoint deviceUseStatement()
- * @method ResourceEndpoint diagnosticReport()
- * @method ResourceEndpoint encounter()
+ * @method DiagnosticReportEndpoint diagnosticReport()
+ * @method DocumentReferenceEndpoint documentReference()
+ * @method SubjectEndpoint encounter()
+ * @method EpisodeOfCareEndpoint episodeOfCare()
  * @method ResourceEndpoint familyMemberHistory()
  * @method ResourceEndpoint goal()
+ * @method ImagingStudyEndpoint imagingStudy()
+ * @method ImmunizationEndpoint immunization()
+ * @method ResourceEndpoint invoice()
+ * @method LocationEndpoint location()
  * @method ResourceEndpoint medication()
  * @method ResourceEndpoint medicationAdministration()
+ * @method MedicationDispenseEndpoint medicationDispense()
+ * @method MedicationRequestEndpoint medicationRequest()
  * @method ResourceEndpoint medicationStatement()
  * @method ResourceEndpoint nutritionOrder()
- * @method ResourceEndpoint observation()
- * @method ResourceEndpoint organization()
- * @method ResourceEndpoint procedure()
- * @method ResourceEndpoint questionnaireResponse()
+ * @method ObservationEndpoint observation()
+ * @method OrganizationEndpoint organization()
+ * @method PatientEndpoint patient()
+ * @method PaymentNoticeEndpoint paymentNotice()
+ * @method PaymentReconciliationEndpoint paymentReconciliation()
+ * @method PractitionerEndpoint practitioner()
+ * @method ClinicalEndpoint procedure()
+ * @method QuestionnaireResponseEndpoint questionnaireResponse()
+ * @method RelatedPersonEndpoint relatedPerson()
  * @method ResourceEndpoint riskAssessment()
- * @method ResourceEndpoint serviceRequest()
- * @method ResourceEndpoint specimen()
+ * @method ServiceRequestEndpoint serviceRequest()
+ * @method SpecimenEndpoint specimen()
  * @method ResourceEndpoint supplyDelivery()
  * @method ResourceEndpoint supplyRequest()
  */
@@ -75,13 +114,36 @@ class Client
      * @var array<string, string>
      */
     private static $endpointClasses = array(
-        ResourceType::PATIENT => 'BangunCode\Ihs\Endpoint\PatientEndpoint',
-        ResourceType::PRACTITIONER => 'BangunCode\Ihs\Endpoint\PractitionerEndpoint',
-        ResourceType::LOCATION => 'BangunCode\Ihs\Endpoint\LocationEndpoint',
+        ResourceType::ALLERGY_INTOLERANCE => 'BangunCode\Ihs\Endpoint\AllergyIntoleranceEndpoint',
+        ResourceType::CARE_PLAN => 'BangunCode\Ihs\Endpoint\ClinicalEndpoint',
+        ResourceType::CHARGE_ITEM => 'BangunCode\Ihs\Endpoint\ChargeItemEndpoint',
+        ResourceType::CLAIM => 'BangunCode\Ihs\Endpoint\ClaimEndpoint',
+        ResourceType::CLINICAL_IMPRESSION => 'BangunCode\Ihs\Endpoint\ClinicalEndpoint',
+        ResourceType::COMPOSITION => 'BangunCode\Ihs\Endpoint\ClinicalEndpoint',
+        ResourceType::CONDITION => 'BangunCode\Ihs\Endpoint\ClinicalEndpoint',
+        ResourceType::COVERAGE => 'BangunCode\Ihs\Endpoint\CoverageEndpoint',
+        ResourceType::COVERAGE_ELIGIBILITY_REQUEST => 'BangunCode\Ihs\Endpoint\CoverageEligibilityRequestEndpoint',
+        ResourceType::COVERAGE_ELIGIBILITY_RESPONSE => 'BangunCode\Ihs\Endpoint\CoverageEligibilityResponseEndpoint',
+        ResourceType::DIAGNOSTIC_REPORT => 'BangunCode\Ihs\Endpoint\DiagnosticReportEndpoint',
         ResourceType::DOCUMENT_REFERENCE => 'BangunCode\Ihs\Endpoint\DocumentReferenceEndpoint',
-        ResourceType::MEDICATION_REQUEST => 'BangunCode\Ihs\Endpoint\MedicationRequestEndpoint',
-        ResourceType::MEDICATION_DISPENSE => 'BangunCode\Ihs\Endpoint\MedicationDispenseEndpoint',
+        ResourceType::ENCOUNTER => 'BangunCode\Ihs\Endpoint\SubjectEndpoint',
+        ResourceType::EPISODE_OF_CARE => 'BangunCode\Ihs\Endpoint\EpisodeOfCareEndpoint',
         ResourceType::IMAGING_STUDY => 'BangunCode\Ihs\Endpoint\ImagingStudyEndpoint',
+        ResourceType::IMMUNIZATION => 'BangunCode\Ihs\Endpoint\ImmunizationEndpoint',
+        ResourceType::LOCATION => 'BangunCode\Ihs\Endpoint\LocationEndpoint',
+        ResourceType::MEDICATION_DISPENSE => 'BangunCode\Ihs\Endpoint\MedicationDispenseEndpoint',
+        ResourceType::MEDICATION_REQUEST => 'BangunCode\Ihs\Endpoint\MedicationRequestEndpoint',
+        ResourceType::OBSERVATION => 'BangunCode\Ihs\Endpoint\ObservationEndpoint',
+        ResourceType::ORGANIZATION => 'BangunCode\Ihs\Endpoint\OrganizationEndpoint',
+        ResourceType::PATIENT => 'BangunCode\Ihs\Endpoint\PatientEndpoint',
+        ResourceType::PAYMENT_NOTICE => 'BangunCode\Ihs\Endpoint\PaymentNoticeEndpoint',
+        ResourceType::PAYMENT_RECONCILIATION => 'BangunCode\Ihs\Endpoint\PaymentReconciliationEndpoint',
+        ResourceType::PRACTITIONER => 'BangunCode\Ihs\Endpoint\PractitionerEndpoint',
+        ResourceType::PROCEDURE => 'BangunCode\Ihs\Endpoint\ClinicalEndpoint',
+        ResourceType::QUESTIONNAIRE_RESPONSE => 'BangunCode\Ihs\Endpoint\QuestionnaireResponseEndpoint',
+        ResourceType::RELATED_PERSON => 'BangunCode\Ihs\Endpoint\RelatedPersonEndpoint',
+        ResourceType::SERVICE_REQUEST => 'BangunCode\Ihs\Endpoint\ServiceRequestEndpoint',
+        ResourceType::SPECIMEN => 'BangunCode\Ihs\Endpoint\SpecimenEndpoint',
     );
 
     /**
@@ -177,62 +239,6 @@ class Client
         }
 
         return $this->endpoints[$type];
-    }
-
-    /**
-     * @return PatientEndpoint
-     */
-    public function patient()
-    {
-        return $this->resource(ResourceType::PATIENT);
-    }
-
-    /**
-     * @return PractitionerEndpoint
-     */
-    public function practitioner()
-    {
-        return $this->resource(ResourceType::PRACTITIONER);
-    }
-
-    /**
-     * @return LocationEndpoint
-     */
-    public function location()
-    {
-        return $this->resource(ResourceType::LOCATION);
-    }
-
-    /**
-     * @return DocumentReferenceEndpoint
-     */
-    public function documentReference()
-    {
-        return $this->resource(ResourceType::DOCUMENT_REFERENCE);
-    }
-
-    /**
-     * @return MedicationRequestEndpoint
-     */
-    public function medicationRequest()
-    {
-        return $this->resource(ResourceType::MEDICATION_REQUEST);
-    }
-
-    /**
-     * @return MedicationDispenseEndpoint
-     */
-    public function medicationDispense()
-    {
-        return $this->resource(ResourceType::MEDICATION_DISPENSE);
-    }
-
-    /**
-     * @return ImagingStudyEndpoint
-     */
-    public function imagingStudy()
-    {
-        return $this->resource(ResourceType::IMAGING_STUDY);
     }
 
     /**

@@ -37,7 +37,7 @@ class PractitionerEndpoint extends ResourceEndpoint
     }
 
     /**
-     * GET /Practitioner?identifier=https://fhir.kemkes.go.id/id/nik|{nik}&name={name}
+     * GET /Practitioner?name={name}&identifier=https://fhir.kemkes.go.id/id/nik|{nik}
      *
      * @param string $name
      * @param string $nik
@@ -46,6 +46,6 @@ class PractitionerEndpoint extends ResourceEndpoint
      */
     public function findByNameNik($name, $nik)
     {
-        return $this->searchByIdentifier(IdentifierSystem::NIK, $nik, array('name' => $name));
+        return $this->search(array('name' => $name, 'identifier' => IdentifierSystem::NIK . '|' . $nik));
     }
 }

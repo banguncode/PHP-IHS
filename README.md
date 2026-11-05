@@ -74,7 +74,34 @@ foreach ($client->condition()->searchAll(array('subject' => $patient['id'])) as 
 }
 ```
 
-Every endpoint provides `create`, `read`, `update`, `patch`, `search`, `searchAll` and `searchByIdentifier`. Dedicated helpers cover the lookups used by the SATUSEHAT use cases: `patient()->findByNik()`, `practitioner()->findByNameNik()`, `documentReference()->findByPrescriptionNumber()`, `medicationDispense()->findByEncounter()`, `imagingStudy()->findByAccessionNumber()` and `location()->setBedStatus()`. Use `$client->resource('Immunization')` for resource types without an accessor. See [examples](examples) for complete flows.
+Every endpoint provides `create`, `read`, `update`, `patch`, `search`, `searchAll`, `searchByIdentifier` and `operation`. Clinical resources add `findBySubject($patientId, $encounterId)` and `findByEncounter($encounterId)`. Other lookups from the SATUSEHAT Postman collections have dedicated helpers:
+
+| Resource | Helpers |
+| --- | --- |
+| Patient | `findByNik`, `findByMotherNik`, `findByNameNik`, `findByNameBirthDateNik`, `findByNameBirthDateGender` |
+| Practitioner | `findByNik`, `findByNameNik`, `findByNameBirthDateGender` |
+| Organization | `findByName`, `findByPartOf` |
+| Location | `findByIdentifier`, `findByName`, `findByOrganization`, `setBedStatus` |
+| Observation | `findByBasedOn` |
+| DiagnosticReport | `findBySpecimen` |
+| ServiceRequest | `findByAccessionNumber`, `findByReferralNumber` |
+| Specimen | `findByRequest`, `findBySubjectAndCollector`, `findBySubjectAndCollectedDate`, `findByAccessionNumber` |
+| MedicationRequest | `findByPrescriptionNumber` |
+| MedicationDispense | `findByEncounter`, `findByPrescription` |
+| DocumentReference | `findByPrescriptionNumber` |
+| ImagingStudy | `findByAccessionNumber` |
+| AllergyIntolerance, Immunization | `findByPatient` |
+| QuestionnaireResponse | `findByEncounter` |
+| EpisodeOfCare | `findByCareManager` |
+| RelatedPerson | `findByNik` |
+| Coverage | `findByPatient` |
+| CoverageEligibilityRequest | `findByIdentifier`, `everything` |
+| CoverageEligibilityResponse | `findByRequest` |
+| ChargeItem | `findByAccount` |
+| Claim | `findBySepNumber` |
+| PaymentReconciliation, PaymentNotice | `findByClaim` |
+
+Use `$client->resource('Basic')` for resource types without an accessor. See [examples](examples) for complete flows.
 
 ### Transaction Bundle
 

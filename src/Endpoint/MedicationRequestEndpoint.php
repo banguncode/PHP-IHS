@@ -8,7 +8,7 @@ use BangunCode\Ihs\Fhir\IdentifierSystem;
 /**
  * MedicationRequest lookups.
  */
-class MedicationRequestEndpoint extends ResourceEndpoint
+class MedicationRequestEndpoint extends ClinicalEndpoint
 {
     /**
      * GET /MedicationRequest?identifier=http://sys-ids.kemkes.go.id/prescription/national|{number}
