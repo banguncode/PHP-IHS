@@ -19,6 +19,8 @@ final class Config
         'organization_id' => null,
         'auth_url' => null,
         'base_url' => null,
+        'api_url' => null,
+        'kptl_url' => null,
         'dicom_router_url' => null,
         'http' => array(),
     );
@@ -33,6 +35,8 @@ final class Config
         'organization_id' => 'SATUSEHAT_ORGANIZATION_ID',
         'auth_url' => 'SATUSEHAT_AUTH_URL',
         'base_url' => 'SATUSEHAT_BASE_URL',
+        'api_url' => 'SATUSEHAT_API_URL',
+        'kptl_url' => 'SATUSEHAT_KPTL_URL',
         'dicom_router_url' => 'SATUSEHAT_DICOM_ROUTER_URL',
     );
 
@@ -45,7 +49,7 @@ final class Config
      * Options:
      * client_id and client_secret (required), environment (development, staging or production,
      * default development), organization_id (the SATUSEHAT Organization id of the facility),
-     * auth_url and base_url (override the URLs derived from environment), dicom_router_url
+     * auth_url, base_url, api_url and kptl_url (override the URLs derived from environment), dicom_router_url
      * (base FHIR URL of the on premise DICOM Router, for example http://10.0.0.5:8080/fhir) and
      * http (options for CurlHttpClient).
      *
@@ -75,7 +79,13 @@ final class Config
         if ($values['base_url'] === null) {
             $values['base_url'] = Environment::fhirUrl($values['environment']);
         }
-        foreach (array('auth_url', 'base_url', 'dicom_router_url') as $url) {
+        if ($values['api_url'] === null) {
+            $values['api_url'] = Environment::apiUrl($values['environment']);
+        }
+        if ($values['kptl_url'] === null) {
+            $values['kptl_url'] = rtrim($values['api_url'], '/') . '/kptl-api-v1';
+        }
+        foreach (array('auth_url', 'base_url', 'api_url', 'kptl_url', 'dicom_router_url') as $url) {
             if ($values[$url] !== null) {
                 $values[$url] = rtrim($values[$url], '/');
             }
@@ -86,8 +96,8 @@ final class Config
 
     /**
      * Builds a configuration from SATUSEHAT_ENV, SATUSEHAT_CLIENT_ID, SATUSEHAT_CLIENT_SECRET,
-     * SATUSEHAT_ORGANIZATION_ID, SATUSEHAT_AUTH_URL, SATUSEHAT_BASE_URL and
-     * SATUSEHAT_DICOM_ROUTER_URL. Explicit options take precedence.
+     * SATUSEHAT_ORGANIZATION_ID, SATUSEHAT_AUTH_URL, SATUSEHAT_BASE_URL, SATUSEHAT_API_URL,
+     * SATUSEHAT_KPTL_URL and SATUSEHAT_DICOM_ROUTER_URL. Explicit options take precedence.
      *
      * @param array<string, mixed> $options
      *
@@ -151,6 +161,22 @@ final class Config
     public function getBaseUrl()
     {
         return $this->values['base_url'];
+    }
+
+    /**
+     * @return string API gateway root used by master data, KFA, the national medical record and downloads.
+     */
+    public function getApiUrl()
+    {
+        return $this->values['api_url'];
+    }
+
+    /**
+     * @return string KPTL master data base URL.
+     */
+    public function getKptlUrl()
+    {
+        return $this->values['kptl_url'];
     }
 
     /**

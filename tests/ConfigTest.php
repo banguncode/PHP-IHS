@@ -15,6 +15,8 @@ final class ConfigTest extends TestCase
         $this->assertSame('https://api-satusehat.kemkes.go.id/oauth2/v1', $production->getAuthUrl());
         $this->assertSame('https://api-satusehat.kemkes.go.id/fhir-r4/v1', $production->getBaseUrl());
         $this->assertSame('https://api-satusehat-stg.dto.kemkes.go.id/fhir-r4/v1', $staging->getBaseUrl());
+        $this->assertSame('https://api-satusehat.kemkes.go.id', $production->getApiUrl());
+        $this->assertSame('https://api-satusehat-stg.dto.kemkes.go.id/kptl-api-v1', $staging->getKptlUrl());
         $this->assertSame(Environment::DEVELOPMENT, $this->config()->getEnvironment());
     }
 

@@ -37,6 +37,17 @@ final class Environment
     /**
      * @param string $environment
      *
+     * @return string API gateway root, for example https://api-satusehat.kemkes.go.id, which serves
+     *                master data, KFA, KPTL, the national medical record and DICOM Router downloads.
+     */
+    public static function apiUrl($environment)
+    {
+        return self::host($environment);
+    }
+
+    /**
+     * @param string $environment
+     *
      * @return string OAuth2 base URL, for example https://api-satusehat.kemkes.go.id/oauth2/v1
      */
     public static function authUrl($environment)

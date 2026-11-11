@@ -37,11 +37,11 @@ $client = new Client(
 | `client_id`, `client_secret` | Required. Credentials from the SATUSEHAT portal. |
 | `environment` | `development` (default), `staging` or `production`. |
 | `organization_id` | Organization id of the facility, used to build identifier systems. |
-| `auth_url`, `base_url` | Override the URLs derived from `environment`. |
+| `auth_url`, `base_url`, `api_url`, `kptl_url` | Override the URLs derived from `environment`. `api_url` is the gateway root used by master data, KFA, the national medical record and DICOM Router downloads. |
 | `dicom_router_url` | FHIR base URL of the on premise DICOM Router. |
 | `http` | `CurlHttpClient` options: `timeout`, `connect_timeout`, `verify`, `proxy`, `curl`. |
 
-`Config::fromEnvironment()` reads the same options from `SATUSEHAT_ENV`, `SATUSEHAT_CLIENT_ID`, `SATUSEHAT_CLIENT_SECRET`, `SATUSEHAT_ORGANIZATION_ID`, `SATUSEHAT_AUTH_URL`, `SATUSEHAT_BASE_URL` and `SATUSEHAT_DICOM_ROUTER_URL`.
+`Config::fromEnvironment()` reads the same options from `SATUSEHAT_ENV`, `SATUSEHAT_CLIENT_ID`, `SATUSEHAT_CLIENT_SECRET`, `SATUSEHAT_ORGANIZATION_ID`, `SATUSEHAT_AUTH_URL`, `SATUSEHAT_BASE_URL`, `SATUSEHAT_API_URL`, `SATUSEHAT_KPTL_URL` and `SATUSEHAT_DICOM_ROUTER_URL`.
 
 SATUSEHAT penalises every failed token request with a one minute wait, so share tokens between processes with `FileTokenStorage` or your own `TokenStorageInterface`. An expired token is renewed and the request is retried once.
 
@@ -125,10 +125,48 @@ foreach ($client->transaction($bundle)->getCreatedIds() as $created) {
 ### DICOM Router
 
 ```php
+$client->downloadDicomRouter('/tmp/dicom-router.zip', 'docker');
+
 $client->serviceRequest()->create($serviceRequest);
 $client->dicomRouter()->createServiceRequest($serviceRequest);
 $study = $client->imagingStudy()->findByAccessionNumber($accessionNumber)->first();
 ```
+
+`downloadDicomRouter()` fetches the docker-compose package (`docker`) or the binary installer (`installer`).
+
+### Master Data, KFA and KPTL
+
+```php
+$client->masterData()->cities(array('11', '12'));
+$client->masterData()->regionPage('sub-districts', 1);
+$client->masterData()->facilities('138');
+
+$client->kfa()->product('93000108');
+$client->kfa()->products('farmasi', 1, 100, array('keyword' => 'panadol'));
+$client->kfa()->jknPrices('92000372');
+
+$client->kptl()->codes('12027');
+$client->kptl()->modifierValues('M006');
+```
+
+These APIs answer with their own JSON shapes, returned as decoded arrays.
+
+### National Medical Record
+
+```php
+use BangunCode\Ihs\Exception\ConsentException;
+
+$link = $client->nationalMedicalRecord()->createConsentLink($patientId, $patientName, $practitionerId, $practitionerName, 'Puskesmas Cibuntu');
+
+try {
+    $record = $client->nationalMedicalRecord()->open($patientId, $patientName, $practitionerId, $practitionerName, 'Puskesmas Cibuntu');
+    $url = $record['data']['shlinkUrl'];
+} catch (ConsentException $e) {
+    $url = $link['data']['verificationUrl'];
+}
+```
+
+The patient approves access through `verificationUrl` in SATUSEHAT Mobile; until then `open()` throws `ConsentException` with error code `CONSENT_REQUIRED`.
 
 ## Error Handling
 
@@ -136,8 +174,8 @@ All exceptions implement `BangunCode\Ihs\Exception\IhsException`.
 
 | Exception | Raised when |
 | --- | --- |
-| `ValidationException` | HTTP 400 or 422: invalid JSON, profile rule violation, missing reference, id mismatch, duplicate resource. |
-| `ConsentException` | The patient has not given consent, reported as HTTP 400 `forbidden` or HTTP 200 `suppressed`. |
+| `ValidationException` | HTTP 400 or 422: invalid JSON, profile rule violation, missing reference, id mismatch, duplicate resource, rejected parameters. |
+| `ConsentException` | The patient has not given consent: HTTP 400 `forbidden`, HTTP 200 `suppressed`, or `CONSENT_REQUIRED` from the national medical record. |
 | `AuthenticationException` | HTTP 401: invalid client, invalid or expired token, wrong environment or missing API role. |
 | `ForbiddenException` | HTTP 403 from the gateway. |
 | `NotFoundException` | HTTP 404: wrong URL or a referenced record that does not exist. |

@@ -45,6 +45,10 @@ use BangunCode\Ihs\Http\CurlHttpClient;
 use BangunCode\Ihs\Http\HttpClientInterface;
 use BangunCode\Ihs\Http\Request;
 use BangunCode\Ihs\Http\Response;
+use BangunCode\Ihs\Service\Kfa;
+use BangunCode\Ihs\Service\Kptl;
+use BangunCode\Ihs\Service\MasterData;
+use BangunCode\Ihs\Service\NationalMedicalRecord;
 
 /**
  * Entry point for the SATUSEHAT FHIR R4 API.
@@ -167,9 +171,9 @@ class Client
     private $endpoints = array();
 
     /**
-     * @var DicomRouter|null
+     * @var array<string, object>
      */
-    private $dicomRouter;
+    private $services = array();
 
     /**
      * @var Response|null
@@ -251,13 +255,73 @@ class Client
         if ($this->config->getDicomRouterUrl() === null) {
             throw new InvalidArgumentException('Set the dicom_router_url configuration option to use the DICOM Router.');
         }
-        if ($this->dicomRouter === null) {
-            $this->dicomRouter = new DicomRouter($this, $this->config->getDicomRouterUrl());
-        }
 
-        return $this->dicomRouter;
+        return $this->service('BangunCode\Ihs\DicomRouter', $this->config->getDicomRouterUrl());
     }
 
+    /**
+     * Region (provinces to villages) and health facility master data.
+     *
+     * @return MasterData
+     */
+    public function masterData()
+    {
+        return $this->service('BangunCode\Ihs\Service\MasterData', $this->config->getApiUrl());
+    }
+
+    /**
+     * Kamus Farmasi dan Alat Kesehatan (KFA): drug and medical device products and JKN prices.
+     *
+     * @return Kfa
+     */
+    public function kfa()
+    {
+        return $this->service('BangunCode\Ihs\Service\Kfa', $this->config->getApiUrl());
+    }
+
+    /**
+     * KPTL procedure code master data.
+     *
+     * @return Kptl
+     */
+    public function kptl()
+    {
+        return $this->service('BangunCode\Ihs\Service\Kptl', $this->config->getKptlUrl());
+    }
+
+    /**
+     * National medical record (RME Nasional): patient consent links and record access.
+     *
+     * @return NationalMedicalRecord
+     */
+    public function nationalMedicalRecord()
+    {
+        return $this->service('BangunCode\Ihs\Service\NationalMedicalRecord', $this->config->getApiUrl());
+    }
+
+    /**
+     * Downloads the DICOM Router distribution from SATUSEHAT.
+     *
+     * @param string $destination File path the zip archive is written to.
+     * @param string $variant     "docker" for the docker-compose package, "installer" for the binary installer.
+     *
+     * @return int Number of bytes written.
+     */
+    public function downloadDicomRouter($destination, $variant = 'docker')
+    {
+        $paths = array('docker' => '/dicom-router', 'installer' => '/dicom-router-installer');
+        if (!isset($paths[$variant])) {
+            throw new InvalidArgumentException('DICOM Router variant must be "docker" or "installer".');
+        }
+
+        $response = $this->send('GET', $this->config->getApiUrl() . $paths[$variant], null, array(), array('Accept' => '*/*'));
+        $written = @file_put_contents($destination, $response->getBody());
+        if ($written === false) {
+            throw new InvalidArgumentException(sprintf('Cannot write the DICOM Router package to "%s".', $destination));
+        }
+
+        return $written;
+    }
     /**
      * POST a transaction Bundle to the FHIR base URL.
      *
@@ -315,11 +379,12 @@ class Client
     /**
      * Sends an authenticated request and returns the decoded JSON body.
      *
-     * A token rejected as expired or invalid is renewed and the request is sent once more.
+     * A token rejected as expired or invalid is renewed and the request is sent once more. A JSON
+     * body that reports a failure despite an HTTP 2xx status is thrown as well.
      *
      * @param string                              $method
-     * @param string                              $path    Relative to the FHIR base URL, or an absolute URL on the
-     *                                                     FHIR or DICOM Router host.
+     * @param string                              $path    Relative to the FHIR base URL, or an absolute URL on a
+     *                                                     configured SATUSEHAT or DICOM Router host.
      * @param array|string|\JsonSerializable|null $payload
      * @param array<string, string|int|string[]>  $query   An array value repeats the parameter.
      * @param array<string, string>               $headers
@@ -330,6 +395,25 @@ class Client
      * @throws TransportException When no response was received.
      */
     public function request($method, $path, $payload = null, array $query = array(), array $headers = array())
+    {
+        return $this->decode($this->send($method, $path, $payload, $query, $headers));
+    }
+
+    /**
+     * Sends an authenticated request and returns the raw response, for non JSON bodies such as downloads.
+     *
+     * @param string                              $method
+     * @param string                              $path
+     * @param array|string|\JsonSerializable|null $payload
+     * @param array<string, string|int|string[]>  $query
+     * @param array<string, string>               $headers
+     *
+     * @return Response A response with an HTTP 2xx status.
+     *
+     * @throws ApiException       When SATUSEHAT answers with an error status.
+     * @throws TransportException When no response was received.
+     */
+    public function send($method, $path, $payload = null, array $query = array(), array $headers = array())
     {
         $url = $this->resolveUrl($path) . self::buildQuery($query);
         $body = $payload === null ? null : Payload::encode(Payload::toArray($payload));
@@ -345,7 +429,7 @@ class Client
             $this->lastResponse = $response;
 
             if ($response->isSuccessful()) {
-                return $this->decode($response);
+                return $response;
             }
 
             $exception = ApiException::fromResponse($response);
@@ -392,7 +476,7 @@ class Client
             throw new ApiException('SATUSEHAT returned a response that is not JSON.', $response);
         }
 
-        if (ApiException::isEnvelope($data) && $data['error'] === true) {
+        if (ApiException::isFailedEnvelope($data)) {
             throw ApiException::fromResponse($response);
         }
 
@@ -404,6 +488,21 @@ class Client
         }
 
         return $data;
+    }
+
+    /**
+     * @param string $class
+     * @param string $baseUrl
+     *
+     * @return object
+     */
+    private function service($class, $baseUrl)
+    {
+        if (!isset($this->services[$class])) {
+            $this->services[$class] = new $class($this, $baseUrl);
+        }
+
+        return $this->services[$class];
     }
 
     /**
@@ -420,7 +519,7 @@ class Client
             return $path === '' ? $base : $base . '/' . ltrim($path, '/');
         }
 
-        $allowed = array($base, $this->config->getDicomRouterUrl());
+        $allowed = array($base, $this->config->getApiUrl(), $this->config->getKptlUrl(), $this->config->getDicomRouterUrl());
         foreach ($allowed as $root) {
             if ($root !== null && self::origin($root) === self::origin($path)) {
                 return $path;

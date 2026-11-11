@@ -8,11 +8,12 @@ use BangunCode\Ihs\Http\Response;
 /**
  * Thrown when SATUSEHAT answers with an error.
  *
- * SATUSEHAT reports errors in four shapes: a FHIR OperationOutcome, an API gateway fault
- * ({"fault": {"faultstring", "detail": {"errorcode"}}}), an OAuth error ({"ErrorCode", "Error"})
- * and, for Patient updates, an envelope ({"code", "error", "message", "data": {"validation"}}).
- * Some errors carry a plain text or HTML body, or none at all. All of them are normalised into a
- * message and an error code.
+ * SATUSEHAT reports errors as a FHIR OperationOutcome, an API gateway fault
+ * ({"fault": {"faultstring", "detail": {"errorcode"}}}), an OAuth error ({"ErrorCode", "Error"}),
+ * a JSON envelope used by Patient updates, master data and the national medical record
+ * ({"code" or "status", "error" or "success", "message", "data"}), a validation list
+ * ({"detail": [{"loc", "msg"}]}), plain text, HTML or an empty body. All of them are normalised
+ * into a message and an error code.
  */
 class ApiException extends \RuntimeException implements IhsException
 {
@@ -75,7 +76,15 @@ class ApiException extends \RuntimeException implements IhsException
             $errorCode = (string) $body['ErrorCode'];
             $detail = isset($body['Error']) ? (string) $body['Error'] : null;
         } elseif (self::isEnvelope($body)) {
-            $detail = isset($body['message']) ? (string) $body['message'] : null;
+            $detail = null;
+            if (isset($body['message']) && is_string($body['message'])) {
+                $detail = $body['message'];
+            } elseif (isset($body['data']) && is_string($body['data'])) {
+                $detail = $body['data'];
+            }
+            if (isset($body['data']['code']) && is_string($body['data']['code'])) {
+                $errorCode = $body['data']['code'];
+            }
             $messages = array();
             foreach (isset($body['data']['validation']) ? (array) $body['data']['validation'] : array() as $item) {
                 if (isset($item['message'])) {
@@ -85,9 +94,21 @@ class ApiException extends \RuntimeException implements IhsException
             if ($messages) {
                 $detail .= ': ' . implode('; ', $messages);
             }
-            if (isset($body['code']) && is_numeric($body['code']) && (int) $body['code'] >= 400) {
-                $status = (int) $body['code'];
+            foreach (array('code', 'status', 'status_code') as $field) {
+                if (isset($body[$field]) && is_numeric($body[$field]) && (int) $body[$field] >= 400) {
+                    $status = (int) $body[$field];
+                    break;
+                }
             }
+        } elseif (is_array($body) && isset($body['detail']) && is_array($body['detail'])) {
+            $messages = array();
+            foreach ($body['detail'] as $item) {
+                if (isset($item['msg'])) {
+                    $location = isset($item['loc']) ? implode('.', (array) $item['loc']) . ': ' : '';
+                    $messages[] = $location . $item['msg'];
+                }
+            }
+            $detail = $messages ? implode('; ', $messages) : null;
         } else {
             $text = trim(preg_replace('/\s+/', ' ', strip_tags($response->getBody())));
             $detail = $text !== '' ? substr($text, 0, 500) : null;
@@ -98,7 +119,7 @@ class ApiException extends \RuntimeException implements IhsException
             $message .= ': ' . $detail;
         }
 
-        if ($outcome !== null && $outcome->hasIssueCode(array('suppressed', 'forbidden'))) {
+        if (($outcome !== null && $outcome->hasIssueCode(array('suppressed', 'forbidden'))) || $errorCode === 'CONSENT_REQUIRED') {
             return new ConsentException($message, $response, $errorCode, $outcome);
         }
         if ($status === 401) {
@@ -121,8 +142,7 @@ class ApiException extends \RuntimeException implements IhsException
     }
 
     /**
-     * Whether a decoded body is the non FHIR envelope {"code", "error", "message", "data"} that
-     * SATUSEHAT uses for some Patient operations.
+     * Whether a decoded body is a non FHIR envelope carrying a boolean "error" or "success" flag.
      *
      * @param mixed $body
      *
@@ -130,7 +150,21 @@ class ApiException extends \RuntimeException implements IhsException
      */
     public static function isEnvelope($body)
     {
-        return is_array($body) && isset($body['error'], $body['message']) && is_bool($body['error']);
+        return is_array($body)
+            && ((isset($body['error']) && is_bool($body['error'])) || (isset($body['success']) && is_bool($body['success'])));
+    }
+
+    /**
+     * Whether a decoded body is an envelope that reports a failure, even with an HTTP 2xx status.
+     *
+     * @param mixed $body
+     *
+     * @return bool
+     */
+    public static function isFailedEnvelope($body)
+    {
+        return self::isEnvelope($body)
+            && ((isset($body['error']) && $body['error'] === true) || (isset($body['success']) && $body['success'] === false));
     }
 
     /**
@@ -142,8 +176,8 @@ class ApiException extends \RuntimeException implements IhsException
     }
 
     /**
-     * Machine readable code: the gateway errorcode, the OAuth ErrorCode or the first
-     * OperationOutcome issue code.
+     * Machine readable code: the gateway errorcode, the OAuth ErrorCode, the envelope data.code
+     * (for example CONSENT_REQUIRED) or the first OperationOutcome issue code.
      *
      * @return string|null
      */
